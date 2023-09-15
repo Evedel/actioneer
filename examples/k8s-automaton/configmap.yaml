@@ -1,0 +1,14 @@
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: k8s-automaton
+  namespace: monitoring
+  labels:
+    app: k8s-automaton
+data:
+  config.yml: |-
+    version: v1
+    actions:
+      - alertname: "High Pod Memory"
+        command: "kubectl delete pod $$pod -n $$namespace"

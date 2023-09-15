@@ -1,0 +1,20 @@
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: alertmanager
+  namespace: monitoring
+  labels:
+    app: alertmanager
+data:
+  config.yml: |-
+    route:
+      group_by: ['alertname']
+      group_wait: 30s
+      group_interval: 5m
+      repeat_interval: 1h
+      receiver: 'automaton'
+    receivers:
+      - name: 'automaton'
+        webhook_configs:
+          - url: 'http://k8s-automaton:8080/'

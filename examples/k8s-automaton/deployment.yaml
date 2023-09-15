@@ -1,0 +1,25 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    app: k8s-automaton
+  name: k8s-automaton
+  namespace: monitoring
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: k8s-automaton
+  strategy:
+  template:
+    metadata:
+      labels:
+        app: k8s-automaton
+    spec:
+      containers:
+      - args:
+          - --log-level=debug
+        image: k8s-automaton:v0.1.0
+        name: k8s-automaton
+        ports:
+        - containerPort: 8080
