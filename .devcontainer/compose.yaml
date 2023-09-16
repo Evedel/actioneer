@@ -8,5 +8,5 @@ services:
 
     volumes:
       - ../..:/workspaces:cached
-
+      - $HOME/.kube:/home/vscode/.kube
     command: sleep infinity
