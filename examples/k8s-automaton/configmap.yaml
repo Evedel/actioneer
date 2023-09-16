@@ -7,8 +7,8 @@ metadata:
   labels:
     app: k8s-automaton
 data:
-  config.yml: |-
+  config.yaml: |-
     version: v1
     actions:
-      - alertname: "High Pod Memory"
-        command: "kubectl delete pod $$pod -n $$namespace"
+      - alertname: "Test Alert"
+        command: "kubectl delete pod ~pod -n ~namespace"

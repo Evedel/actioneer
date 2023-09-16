@@ -1,0 +1,21 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    app: test-deployment
+  name: test-deployment
+  namespace: monitoring
+spec:
+  replicas: 5
+  selector:
+    matchLabels:
+      app: test-deployment
+  strategy:
+  template:
+    metadata:
+      labels:
+        app: test-deployment
+    spec:
+      containers:
+      - image: gcr.io/google-containers/pause:3.2
+        name: test-deployment

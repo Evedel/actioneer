@@ -8,15 +8,11 @@ metadata:
 data:
   prometheus.rules: |-
     groups:
-    - name: demo alert
+    - name: test alert
       rules:
-      - alert: High Pod Memory
-        expr: sum(container_memory_usage_bytes) > 1
-        for: 1m
-        labels:
-          severity: slack
-        annotations:
-          summary: High Memory Usage
+      - alert: Test Alert
+        expr: max(container_memory_usage_bytes{pod=~"test-deployment.*",namespace!~"kube-system"}) by (pod,namespace) > 0
+        for: 10m
   prometheus.yml: |-
     global:
       scrape_interval: 10s
