@@ -16,6 +16,7 @@ spec:
       labels:
         app: k8s-automaton
     spec:
+      serviceAccountName: k8s-automaton
       containers:
       - args:
           - --log-level=debug
