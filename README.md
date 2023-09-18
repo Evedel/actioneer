@@ -2,8 +2,10 @@
 
 TODO:
 - [ ] split into classes
+    - [ ] config
+    - [ ] server
+    - [ ] action/command
 - [ ] run command only on "fired" (and parametrise the key)
-- [ ] add tests
 - [ ] add logging for skipped alerts
 - [ ] prep ci and images
     - [ ] only automaton image

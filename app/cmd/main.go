@@ -1,8 +1,9 @@
 package main
 
 import (
+	"actioneer/internal/args"
+	"actioneer/internal/logging"
 	"encoding/json"
-	"flag"
 	"fmt"
 	"io"
 	"log/slog"
@@ -108,27 +109,6 @@ func (s Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func InitLogger(log_level string) {
-	var programLogLevel = new(slog.LevelVar)
-	h := slog.NewJSONHandler(os.Stderr, &slog.HandlerOptions{Level: programLogLevel})
-	slog.SetDefault(slog.New(h))
-
-	switch log_level {
-	case "debug":
-		programLogLevel.Set(slog.LevelDebug)
-	case "info":
-		programLogLevel.Set(slog.LevelInfo)
-	case "warn":
-		programLogLevel.Set(slog.LevelWarn)
-	case "error":
-		programLogLevel.Set(slog.LevelError)
-	default:
-		slog.Error("wrong value in --log-level=" + log_level)
-		os.Exit(2)
-	}
-	slog.Info("--log-level=" + strings.ToLower(programLogLevel.Level().String()))
-}
-
 func ReadConfig(path string) (config Config) {
 	file, err := os.Open(path)
 	if err != nil {
@@ -188,20 +168,19 @@ func ValidateConfig(config Config) (result bool) {
 }
 
 func main() {
-	log_level := flag.String("log-level", "info", "debug | info | warn | error")
-	config_path := flag.String("config-path", "/app/config/config.json", "path to config file")
-	is_dry_run := flag.Bool("dry-run", false, "will not execute commands")
-	flag.Parse()
+	args := args.Parse()
 
-	InitLogger(*log_level)
+	if err := logging.Init(*args.LogLevel, nil); err != nil {
+		os.Exit(2)
+	}
 
-	config := ReadConfig(*config_path)
+	config := ReadConfig(*args.ConfigPath)
 	if !ValidateConfig(config) {
 		os.Exit(2)
 	}
 
 	mux := http.NewServeMux()
-	s := Server{Config: config, IsDryRun: *is_dry_run}
+	s := Server{Config: config, IsDryRun: *args.IsDryRun}
 	mux.Handle("/", s)
 	if err := http.ListenAndServe(":8080", mux); err != nil {
 		slog.Error(err.Error())
