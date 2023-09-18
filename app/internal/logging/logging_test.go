@@ -47,8 +47,12 @@ func TestInit_WithCorrectLoggingLevels(t *testing.T) {
 func TestInit_WithIncorrectLoggingLevel(t *testing.T) {
 	var buf bytes.Buffer
 
+	expected_log := "wrong value in --log-level=wrong_log_level"
 	ed := Init("wrong_log_level", &buf)
 	if ed == nil {
 		t.Error("expected error")
+	}
+	if !bytes.Contains(buf.Bytes(), []byte(expected_log)) {
+		t.Error("expected log not found: " + expected_log)
 	}
 }
