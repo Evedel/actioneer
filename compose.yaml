@@ -1,0 +1,10 @@
+version: '3.8'
+
+services:
+  go:
+    image: golang:1.21.1
+    volumes:
+      - ./:/workspaces:cached
+      - $HOME/.kube:/home/vscode/.kube
+    working_dir: /workspaces/app
+    entrypoint: go
