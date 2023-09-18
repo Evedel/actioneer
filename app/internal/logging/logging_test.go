@@ -42,15 +42,6 @@ func TestInit_WithCorrectLoggingLevels(t *testing.T) {
 			}
 		}
 	}
-
-	// ed := Init("debug", &buf)
-	// if ed != nil {
-	// 	t.Error(ed)
-	// }
-	// slog.Debug("test1")
-	// if !bytes.Contains(buf.Bytes(), []byte("test1")) {
-	// 	t.Error("test1 not found in log")
-	// }
 }
 
 func TestInit_WithIncorrectLoggingLevel(t *testing.T) {
