@@ -21,7 +21,7 @@ spec:
       - args:
           - --log-level=debug
           - --config-path=/etc/k8s-automaton/config.yaml
-        image: k8s-automaton:v0.1.0
+        image: k8s-automaton:k8s-v0.1.0
         name: k8s-automaton
         ports:
           - containerPort: 8080
