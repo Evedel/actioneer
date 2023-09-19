@@ -4,20 +4,16 @@ import (
 	"errors"
 	"io"
 	"log/slog"
-	"os"
 	"strings"
 )
 
 // Init initializes logger with log level and writer
 // log_level: debug | info | warn | error
-// writer: if nil, will use os.Stdout
+// writer has to be provided, use os.Stdout | buffer | file
 func Init(log_level string, writer io.Writer) (e error) {
 	e = nil
 
 	leveler := new(slog.LevelVar)
-	if writer == nil {
-		writer = os.Stdout
-	}
 	h := slog.NewJSONHandler(writer, &slog.HandlerOptions{Level: leveler})
 	slog.SetDefault(slog.New(h))
 

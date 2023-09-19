@@ -2,7 +2,6 @@
 
 TODO:
 - [ ] split into classes
-    - [ ] config
     - [ ] server
     - [ ] action/command
 - [ ] run command only on "fired" (and parametrise the key)
@@ -13,3 +12,4 @@ TODO:
 - [ ] configure substitution variable (not only `~`)
 - [ ] toggle to never log commands (in case if there are env vars)
 - [ ] add dependabot
+- [ ] pass args to server

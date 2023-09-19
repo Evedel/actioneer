@@ -2,6 +2,7 @@ package main
 
 import (
 	"actioneer/internal/args"
+	"actioneer/internal/config"
 	"actioneer/internal/logging"
 	"encoding/json"
 	"fmt"
@@ -11,21 +12,9 @@ import (
 	"os"
 	"os/exec"
 	"strings"
-
-	"gopkg.in/yaml.v3"
 )
 
 var alertNameLabel = "alertname"
-
-type Action struct {
-	Alertname string
-	Command   string
-}
-
-type Config struct {
-	Version string
-	Actions []Action
-}
 
 type Alert struct {
 	Status string
@@ -37,7 +26,7 @@ type Notification struct {
 }
 
 type Server struct {
-	Config   Config
+	Config   config.Config
 	IsDryRun bool
 }
 
@@ -109,78 +98,23 @@ func (s Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func ReadConfig(path string) (config Config) {
-	file, err := os.Open(path)
-	if err != nil {
-		slog.Error(err.Error())
-		os.Exit(2)
-	}
-	defer file.Close()
-
-	bytes, err := io.ReadAll(file)
-	if err != nil {
-		slog.Error(err.Error())
-		os.Exit(2)
-	}
-
-	if err := yaml.Unmarshal(bytes, &config); err != nil {
-		slog.Error(err.Error())
-		os.Exit(2)
-	}
-
-	return config
-}
-
-func ValidateConfig(config Config) (result bool) {
-	if config.Version != "v1" {
-		slog.Error("wrong config version: " + config.Version)
-		return false
-	}
-
-	if len(config.Actions) == 0 {
-		slog.Error("no actions defined")
-		return false
-	}
-
-	for _, action := range config.Actions {
-		if action.Alertname == "" {
-			slog.Error("empty alertname in action: " + fmt.Sprint(action))
-			return false
-		}
-		if action.Command == "" {
-			slog.Error("empty command in action: " + fmt.Sprint(action))
-			return false
-		}
-	}
-
-	for i, action := range config.Actions {
-		for j, action2 := range config.Actions {
-			if i != j && action.Alertname == action2.Alertname {
-				slog.Error("duplicate alertname in actions: " + fmt.Sprint(action) + " and " + fmt.Sprint(action2))
-				return false
-			}
-		}
-	}
-
-	slog.Debug("config: " + fmt.Sprintf("%+v", config))
-
-	return true
-}
-
 func main() {
 	args := args.Parse()
 
-	if err := logging.Init(*args.LogLevel, nil); err != nil {
+	if err := logging.Init(*args.LogLevel, os.Stdout); err != nil {
 		os.Exit(2)
 	}
 
-	config := ReadConfig(*args.ConfigPath)
-	if !ValidateConfig(config) {
+	cfg, err := config.Read(config.ConfigReader{}, *args.ConfigPath)
+	if err != nil {
+		os.Exit(2)
+	}
+	if !config.IsValid(cfg) {
 		os.Exit(2)
 	}
 
 	mux := http.NewServeMux()
-	s := Server{Config: config, IsDryRun: *args.IsDryRun}
+	s := Server{Config: cfg, IsDryRun: *args.IsDryRun}
 	mux.Handle("/", s)
 	if err := http.ListenAndServe(":8080", mux); err != nil {
 		slog.Error(err.Error())
