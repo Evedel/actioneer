@@ -2,7 +2,6 @@
 
 TODO:
 - [ ] split into classes
-    - [ ] config
     - [ ] server
     - [ ] action/command
 - [ ] run command only on "fired" (and parametrise the key)
