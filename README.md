@@ -13,3 +13,4 @@ TODO:
 - [ ] configure substitution variable (not only `~`)
 - [ ] toggle to never log commands (in case if there are env vars)
 - [ ] add dependabot
+- [ ] pass args to server
