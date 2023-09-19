@@ -101,7 +101,7 @@ func (s Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 func main() {
 	args := args.Parse()
 
-	if err := logging.Init(*args.LogLevel, nil); err != nil {
+	if err := logging.Init(*args.LogLevel, os.Stdout); err != nil {
 		os.Exit(2)
 	}
 
