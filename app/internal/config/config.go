@@ -9,14 +9,17 @@ import (
 	"gopkg.in/yaml.v3"
 )
 
+var DefaultSubstitutionPrefix = "~"
+
 type Action struct {
 	Alertname string
 	Command   string
 }
 
 type Config struct {
-	Version string
-	Actions []Action
+	Version            string
+	Actions            []Action
+	SubstitutionPrefix string
 }
 
 type IConfigReader interface {
@@ -60,6 +63,10 @@ func Read(icr IConfigReader, path string) (Config, error) {
 		return config, err
 	}
 
+	if config.SubstitutionPrefix == "" {
+		slog.Info("no substitution prefix defined, using default: " + DefaultSubstitutionPrefix)
+		config.SubstitutionPrefix = DefaultSubstitutionPrefix
+	}
 	return config, nil
 }
 
