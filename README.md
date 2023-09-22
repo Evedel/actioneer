@@ -13,3 +13,5 @@ TODO:
     - [ ] k8s-ready image (automaton + kubectl + yq)
 - [ ] toggle to never log commands (in case if there are env vars)
 - [ ] add dependabot
+- [ ] add templating to k8s e2e
+- [ ] add delay to each action

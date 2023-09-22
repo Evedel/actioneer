@@ -64,9 +64,9 @@ func (s Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 							}
 						}
 
-						command := ""
+						command := action.CommandTemplate
 						for k, v := range labelValues {
-							command = strings.ReplaceAll(action.CommandTemplate, s.State.SubstitutionPrefix+k, v)
+							command = strings.ReplaceAll(command, s.State.SubstitutionPrefix+k, v)
 						}
 
 						slog.Debug("processing command: " + fmt.Sprint(command))
