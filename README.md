@@ -5,6 +5,7 @@ TODO:
     - [ ] server
         - [ ] pass args to server
     - [ ] command
+    - should not return on errors inside of "for each alert in notification"
 - [ ] run command only on "fired" (and parametrise the key)
 - [ ] add logging for skipped alerts
 - [ ] prep ci and images
