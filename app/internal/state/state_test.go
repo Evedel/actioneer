@@ -82,3 +82,58 @@ func TestInitState(t *testing.T) {
 		t.Errorf("expected state.SubstitutionPrefix to be ~, got %+v", state.SubstitutionPrefix)
 	}
 }
+
+func TestInitState_NonDefaultSubstitutionPrefix(t *testing.T) {
+	config1 := config.Config{
+		Version: "v1",
+		Actions: []config.Action{
+			{
+				Alertname: "foo",
+				Command:   "~foo",
+			},
+		},
+		SubstitutionPrefix: "$label.",
+	}
+
+	state1 := InitState(config1)
+	if len(state1.Actions) != 1 {
+		t.Errorf("expected state.Actions to be 1, got %+v", state1.Actions)
+	}
+	if len(state1.Actions[0].TemplateKeys) != 0 {
+		t.Errorf("expected state.Actions[0].TemplateKeys to be empty, got %+v", state1.Actions[0].TemplateKeys)
+	}
+	if state1.SubstitutionPrefix != "$label." {
+		t.Errorf("expected state.SubstitutionPrefix to be \"$label.\", got %+v", state1.SubstitutionPrefix)
+	}
+
+	config2 := config.Config{
+		Version: "v1",
+		Actions: []config.Action{
+			{
+				Alertname: "foo",
+				Command:   "~foo $label.bar",
+			},
+		},
+		SubstitutionPrefix: "$label.",
+	}
+
+	state2 := InitState(config2)
+	if len(state2.Actions) != 1 {
+		t.Errorf("expected state.Actions to be 1, got %+v", state2.Actions)
+	}
+	if len(state2.Actions[0].TemplateKeys) != 1 {
+		t.Errorf("expected state.Actions[0].TemplateKeys to be 1, got %+v", state2.Actions[0].TemplateKeys)
+	}
+	if state2.Actions[0].TemplateKeys[0] != "bar" {
+		t.Errorf("expected state.Actions[0].TemplateKeys[0] to be \"bar\", got %+v", state2.Actions[0].TemplateKeys[0])
+	}
+	if state2.Actions[0].Alertname != "foo" {
+		t.Errorf("expected state.Actions[0].Alertname to be foo, got %+v", state2.Actions[0].Alertname)
+	}
+	if state2.Actions[0].CommandTemplate != "~foo $label.bar" {
+		t.Errorf("expected state.Actions[0].Command to be \"~foo $label.bar\", got %+v", state2.Actions[0].CommandTemplate)
+	}
+	if state2.SubstitutionPrefix != "$label." {
+		t.Errorf("expected state.SubstitutionPrefix to be \"$label.bar\", got %+v", state2.SubstitutionPrefix)
+	}
+}

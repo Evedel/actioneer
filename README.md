@@ -4,7 +4,6 @@ TODO:
 - [ ] split into classes
     - [ ] server
         - [ ] pass args to server
-    - [ ] state
     - [ ] command
 - [ ] run command only on "fired" (and parametrise the key)
 - [ ] add logging for skipped alerts
