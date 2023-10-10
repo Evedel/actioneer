@@ -34,11 +34,10 @@ func Execute(icr ICommandRunner, command string, isDryRun bool) {
 		if err := icr.Run(cmd); err != nil {
 			slog.Error("command execution failed: " + command)
 			slog.Error(err.Error())
+			return
 		}
 		slog.Info("stdout: " + stdout.String())
-		if stderr.String() == "" {
-			slog.Info("stderr: " + stderr.String())
-		} else {
+		if stderr.String() != "" {
 			slog.Error("stderr: " + stderr.String())
 		}
 	}
