@@ -13,5 +13,11 @@ else
     go="go"
 fi
 
+set +e
 $go test -v -cover -coverprofile=coverage.out ./...
+result=$?
+set -e
+
 $go tool cover -html=coverage.out -o coverage.html
+
+exit $result
