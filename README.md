@@ -1,6 +1,6 @@
 # k8s-automaton
 
-[![Go Coverage](https://github.com/USER/REPO/wiki/coverage.svg)](https://raw.githack.com/wiki/USER/REPO/coverage.html)
+[![Go Coverage](https://github.com/Evedel/automaton/wiki/coverage.svg)](https://raw.githack.com/wiki/Evedel/automaton/coverage.html)
 
 That is a pet project to have some fun with golang, & testing, & ci/cd, & tdd.
 
