@@ -14,7 +14,7 @@ else
 fi
 
 set +e
-$go test -v -cover -coverprofile=coverage.out ./...
+$go test -cover -coverprofile=coverage.out ./...
 result=$?
 set -e
 
