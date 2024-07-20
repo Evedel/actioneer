@@ -9,5 +9,7 @@ jobs:
       - name: Test
         run: ./bin/test.sh
       - name: Update coverage report
-        uses: ncruces/go-coverage-report@v0
+        uses: Evedel/go-coverage-report@v0.4.0-rc6
         if: github.ref == 'refs/heads/main'
+        with:
+          project-directory: ./app
