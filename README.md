@@ -30,10 +30,9 @@ Imagine a cluster with:
 ## TODO:
 - [ ] parametrise alertname key
 - [ ] add specific lable to only run action for alerts with that label
-- [ ] prep ci and images
-    - [ ] only automaton image
-    - [ ] k8s-ready image (automaton + kubectl + yq)
+- [ ] bake image after tests
 - [ ] toggle to never log commands (in case if there are env vars)
 - [ ] add dependabot
 - [ ] add templating to k8s e2e
 - [ ] add delay to each action
+- [ ] add acceptance tests
