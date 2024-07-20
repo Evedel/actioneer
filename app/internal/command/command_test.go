@@ -8,23 +8,6 @@ import (
 	"testing"
 )
 
-type FakeCommandRunner struct {
-	cmd    *exec.Cmd
-	runErr error
-	stdout string
-	stderr string
-}
-
-func (c FakeCommandRunner) Command(name string, arg ...string) *exec.Cmd {
-	return exec.Command(name, arg...)
-}
-func (c *FakeCommandRunner) Run(cmd *exec.Cmd) error {
-	c.cmd = cmd
-	cmd.Stderr.Write([]byte(c.stderr))
-	cmd.Stdout.Write([]byte(c.stdout))
-	return c.runErr
-}
-
 func TestExecute_SetCommandAndArgs(t *testing.T) {
 	fcr := FakeCommandRunner{}
 	Execute(&fcr, "fake command", false)
