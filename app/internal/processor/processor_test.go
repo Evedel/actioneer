@@ -129,3 +129,32 @@ func Test_CheckActionNeeded_NotFound(t *testing.T) {
 	th.AssertEqual(t, false, actionNeeded)
 	th.AssertStringContains(t, "actions not found for alert=[High Pod CPU]", buf.String())
 }
+
+func Test_CheckTemplateLabelsPresent_Ok(t *testing.T) {
+	// given
+	action := genAction("", "", []string{"pod"})
+	realLabelValues := map[string]string{
+		"pod": "test_pod_name",
+	}
+	// when
+	err := CheckTemplateLabelsPresent(action, realLabelValues)
+	// then
+	th.AssertNil(t, err)
+}
+
+func Test_CheckTemplateLabelsPresent_Error(t *testing.T) {
+	var buf bytes.Buffer
+	logging.Init("error", &buf)
+
+	// given
+	action := genAction("", "", []string{"pod"})
+	realLabelValues := map[string]string{
+		"namespace": "monitoring",
+	}
+	// when
+	err := CheckTemplateLabelsPresent(action, realLabelValues)
+	// then
+	th.AssertNotNil(t, err)
+	th.AssertEqual(t, "no label 'pod' were present on the alert, action=[action1] cannot be taken for alert=[High Pod Memory]", err.Error())
+	th.AssertStringContains(t, "no label 'pod' were present on the alert, action=[action1] cannot be taken for alert=[High Pod Memory]", buf.String())
+}
