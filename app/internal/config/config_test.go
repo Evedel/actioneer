@@ -125,6 +125,7 @@ func TestIsValid_Ok(t *testing.T) {
 		Version: "v1",
 		Actions: []Action{
 			{
+				Name: "Test Action",
 				Alertname: "Test Alert",
 				Command:   "echo \"test\"",
 			},
@@ -185,8 +186,8 @@ func TestIsValid_EmptyAlertname(t *testing.T) {
 	cfg := Config{
 		Version: "v1",
 		Actions: []Action{
-			{
-				Alertname: "",
+			{	
+				Name: "Test Action",
 				Command:   "echo \"test\"",
 			},
 		},
@@ -208,8 +209,8 @@ func TestIsValid_EmptyCommand(t *testing.T) {
 		Version: "v1",
 		Actions: []Action{
 			{
+				Name: "Test Action",
 				Alertname: "Test Alert",
-				Command:   "",
 			},
 		},
 	}
@@ -225,14 +226,10 @@ func TestIsValid_EmptyCommand(t *testing.T) {
 	}
 }
 
-func TestIsValid_DuplicateAlertname(t *testing.T) {
+func TestIsValid_EmptyName(t *testing.T) {
 	cfg := Config{
 		Version: "v1",
 		Actions: []Action{
-			{
-				Alertname: "Test Alert",
-				Command:   "echo \"test\"",
-			},
 			{
 				Alertname: "Test Alert",
 				Command:   "echo \"test\"",
@@ -246,7 +243,35 @@ func TestIsValid_DuplicateAlertname(t *testing.T) {
 	if IsValid(cfg) {
 		t.Error("expected invalid config, got valid")
 	}
-	if !strings.Contains(buf.String(), "duplicate alertname in actions") {
+	if !strings.Contains(buf.String(), "empty name in action") {
+		t.Error("expected empty command error, got: " + buf.String())
+	}
+}
+
+func TestIsValid_DuplicateAlertname(t *testing.T) {
+	cfg := Config{
+		Version: "v1",
+		Actions: []Action{
+			{
+				Name: "Test Action 1",
+				Alertname: "Test Alert",
+				Command:   "echo \"test\"",
+			},
+			{
+				Name: "Test Action 2",
+				Alertname: "Test Alert",
+				Command:   "echo \"test\"",
+			},
+		},
+	}
+
+	var buf bytes.Buffer
+	logging.Init("error", &buf)
+
+	if IsValid(cfg) {
+		t.Error("expected invalid config, got valid")
+	}
+	if !strings.Contains(buf.String(), "multiple actions are not allowed for the same alertname") {
 		t.Error("expected duplicate alertname error, got: " + buf.String())
 	}
 }

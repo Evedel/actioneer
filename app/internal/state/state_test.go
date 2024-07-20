@@ -159,9 +159,9 @@ func TestGetActionByAlertName_NotFond(t *testing.T) {
 	}
 
 	state1 := InitState(config1)
-	action, err := state1.GetActionByAlertName("qux")
-	if err == nil {
-		t.Errorf("expected err to be not nil, got %+v", err)
+	action, was_found := state1.GetActionByAlertName("qux")
+	if was_found {
+		t.Errorf("expected alert to be not found, got %+v", was_found)
 	}
 	if action.Alertname != "" {
 		t.Errorf("expected action.Alertname to be empty, got %+v", action.Alertname)
@@ -193,9 +193,9 @@ func TestGetActionByAlertName_Fond(t *testing.T) {
 	}
 
 	state1 := InitState(config1)
-	action, err := state1.GetActionByAlertName("bar")
-	if err != nil {
-		t.Errorf("expected err to be nil, got %+v", err)
+	action, was_found := state1.GetActionByAlertName("bar")
+	if !was_found {
+		t.Errorf("expected alert to be found, got %+v", was_found)
 	}
 	if action.Alertname != "bar" {
 		t.Errorf("expected action.Alertname to be bar, got %+v", action.Alertname)

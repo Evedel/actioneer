@@ -5,26 +5,13 @@ import (
 	"actioneer/internal/command"
 	"actioneer/internal/config"
 	"actioneer/internal/logging"
+	"actioneer/internal/processor"
 	"actioneer/internal/state"
-	"encoding/json"
-	"fmt"
 	"io"
 	"log/slog"
 	"net/http"
 	"os"
-	"strings"
 )
-
-var alertNameLabel = "alertname"
-
-type Alert struct {
-	Status string
-	Labels map[string]string
-}
-
-type Notification struct {
-	Alerts []Alert
-}
 
 type Server struct {
 	IsDryRun bool
@@ -32,55 +19,21 @@ type Server struct {
 }
 
 func (s Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	bytes, err := io.ReadAll(r.Body)
-	if err != nil {
-		panic(err)
+	bytes, errReadBody := io.ReadAll(r.Body)
+	if errReadBody != nil {
+		panic(errReadBody)
 	}
 	defer r.Body.Close()
 
-	slog.Debug("incomming request body: " + fmt.Sprintf("%+v", string(bytes)))
-	var notification Notification
-	if err := json.Unmarshal(bytes, &notification); err != nil {
-		slog.Error("cannot unmarshal incomming notification: " + fmt.Sprintf("%+v", string(bytes)))
-		slog.Error(err.Error())
+	notification, errReadNotification := processor.ReadIncommingNotification(bytes)
+	if errReadNotification != nil {
+		panic(errReadNotification)
 	}
-
-	slog.Debug("processing notification: " + fmt.Sprint(notification))
-	if len(notification.Alerts) == 0 {
-		slog.Error("no alerts in notification: " + fmt.Sprint(notification))
-		return
-	}
-
-	for _, alert := range notification.Alerts {
-		if alertName, ok := alert.Labels[alertNameLabel]; ok {
-			slog.Debug("processing alert: " + alertName)
-
-			action, err := s.State.GetActionByAlertName(alertName)
-			if err != nil {
-				slog.Warn(err.Error())
-				return
-			}
-			slog.Debug("command template: " + fmt.Sprint(action.CommandTemplate))
-
-			labelValues := make(map[string]string)
-			for _, templateKey := range action.TemplateKeys {
-				if value, ok := alert.Labels[templateKey]; ok {
-					labelValues[templateKey] = value
-				} else {
-					slog.Error("no label '" + templateKey + "' in alert, skipping alert: " + fmt.Sprintf("%+v", alert) + " and action: " + fmt.Sprintf("%+v", action))
-					return
-				}
-			}
-
-			commandReady := action.CommandTemplate
-			for k, v := range labelValues {
-				commandReady = strings.ReplaceAll(commandReady, s.State.SubstitutionPrefix+k, v)
-			}
-
-			command.Execute(command.CommandRunner{}, commandReady, s.IsDryRun)
-		} else {
-			slog.Error("no alert name label '" + alertNameLabel + "', skipping: " + fmt.Sprintf("%+v", alert))
-		}
+	
+	shell := command.CommandRunner{}
+	errTakeAction := processor.TakeActions(shell, s.State, notification, s.IsDryRun)
+	if errTakeAction != nil {
+		panic(errTakeAction)
 	}
 }
 

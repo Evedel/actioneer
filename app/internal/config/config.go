@@ -12,6 +12,7 @@ import (
 var DefaultSubstitutionPrefix = "~"
 
 type Action struct {
+	Name 	  string
 	Alertname string
 	Command   string
 }
@@ -82,6 +83,10 @@ func IsValid(config Config) (result bool) {
 	}
 
 	for _, action := range config.Actions {
+		if action.Name == "" {
+			slog.Error("empty name in action: " + fmt.Sprint(action))
+			return false
+		}
 		if action.Alertname == "" {
 			slog.Error("empty alertname in action: " + fmt.Sprint(action))
 			return false
@@ -95,7 +100,7 @@ func IsValid(config Config) (result bool) {
 	for i, action := range config.Actions {
 		for j, action2 := range config.Actions {
 			if i != j && action.Alertname == action2.Alertname {
-				slog.Error("duplicate alertname in actions: " + fmt.Sprint(action) + " and " + fmt.Sprint(action2))
+				slog.Error("multiple actions are not allowed for the same alertname: " + fmt.Sprint(action) + " and " + fmt.Sprint(action2))
 				return false
 			}
 		}

@@ -1,6 +1,11 @@
 # k8s-automaton
 
+[![Go Coverage](https://github.com/USER/REPO/wiki/coverage.svg)](https://raw.githack.com/wiki/USER/REPO/coverage.html)
+
 That is a pet project to have some fun with golang, & testing, & ci/cd, & tdd.
+
+The approach that this 'operator' enables is a clear ANTI-pattern and goes against any reasonable operational models.
+If there is an alert or problem in the cluster => root cause should be fixed and not the bandaids automated.
 
 ## Idea
 [automaton/examples/k8s](https://github.com/Evedel/automaton/tree/main/examples/k8s)
@@ -17,12 +22,8 @@ Imagine a cluster with:
     once the alert is sent **k8s-automaton** way -- `command` is executed
 
 ## TODO:
-- [ ] split into classes
-    - [ ] server
-        - [ ] pass args to server
-    - should not return on errors inside of "for each alert in notification"
-- [ ] run command only on "fired" (and parametrise the key)
-- [ ] add logging for skipped alerts
+- [ ] parametrise alertname key
+- [ ] add specific lable to only run action for alerts with that label
 - [ ] prep ci and images
     - [ ] only automaton image
     - [ ] k8s-ready image (automaton + kubectl + yq)
