@@ -70,21 +70,43 @@ func CompileCommandTemplate(action state.Action, realLabelValues map[string]stri
 	return commandReady
 }
 
-func TakeActions(state state.State, notification Notification, isDryRun bool) error {
+func TakeActions(shell command.ICommandRunner, state state.State, notification Notification, isDryRun bool) error {
 	slog.Debug("incomming notification=[" + fmt.Sprint(notification)+"]")
 
 	if len(notification.Alerts) == 0 {
-		slog.Error("no alerts in notification: " + fmt.Sprint(notification))
-		return false
+		slog.Error("no alerts in notification=[" + fmt.Sprint(notification)+"]")
+		return nil
 	}
 
 	for _, alert := range notification.Alerts {
-		if alertName, ok := alert.Labels[alertNameLabel]; ok {
-			_, found := state.GetActionByAlertName(alertName)
-			if found && (alert.Status == "firing") {
-				return true
-			}
+		if _, ok := alert.Labels[alertNameLabel]; !ok {
+			slog.Error("no alert name label=[" + alertNameLabel + "], skipping=[" + fmt.Sprintf("%+v", alert)+"]")
+			continue
 		}
+
+		if !CheckActionNeeded(state, alert) {
+			slog.Debug("skipping alert=[" + fmt.Sprintf("%+v", alert)+"] as no defined action found")
+			continue
+		}
+
+		alertName := alert.Labels[alertNameLabel]
+		slog.Debug("processing alert=[" + alertName+"]")
+
+		action, _ := state.GetActionByAlertName(alertName)
+		slog.Debug("command template=[" + fmt.Sprint(action.CommandTemplate)+"]")
+
+		realLabelValues := ExtractRealLabelValues(alert)
+		slog.Debug("found lables on the real alert=[" + fmt.Sprint(realLabelValues)+"]")
+
+		err := CheckTemplateLabelsPresent(action, realLabelValues)
+		if err != nil {
+			slog.Error(err.Error())
+			return err
+		}
+
+		commandReady := CompileCommandTemplate(action, realLabelValues, state.SubstitutionPrefix)
+
+		command.Execute(shell, commandReady, isDryRun)
 	}
-	return false
+	return nil
 }

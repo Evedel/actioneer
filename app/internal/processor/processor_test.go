@@ -1,6 +1,7 @@
 package processor
 
 import (
+	"actioneer/internal/command"
 	"actioneer/internal/logging"
 	"actioneer/internal/state"
 	th "actioneer/internal/testing_helper"
@@ -68,36 +69,42 @@ func genState(actions []state.Action) state.State {
 	}
 	return state.State{
 		Actions: actions,
+		SubstitutionPrefix: "$",
 	}
 }
 
-func genAlert(status string, alertName string, pod string, namespace string) Alert {
+func genAlert(status string, labels map[string]string) Alert {
 	if status == "" {
 		status = "firing"
 	}
-	if alertName == "" {
-		alertName = "High Pod Memory"
-	}
-	if pod == "" {
-		pod = "test_pod_name"
-	}
-	if namespace == "" {
-		namespace = "monitoring"
+	if labels == nil {
+		labels = map[string]string{
+			"alertname": "High Pod Memory",
+			"pod":      "test_pod_name",
+			"namespace": "monitoring",
+		}
 	}
 	return Alert{
 		Status: status,
-		Labels: map[string]string{
-			"alertname": alertName,
-			"pod":      pod,
-			"namespace": namespace,
-		},
+		Labels: labels,
+	}
+}
+
+func genNotification(alerts []Alert) Notification {
+	if alerts == nil {
+		alerts = []Alert{
+			genAlert("", nil),
+		}
+	}
+	return Notification{
+		Alerts: alerts,
 	}
 }
 
 func Test_CheckActionNeeded_Ok(t *testing.T) {
 	// given
 	state := genState(nil)
-	alert := genAlert("", "", "", "")
+	alert := genAlert("", nil)
 	// when
 	actionNeeded := CheckActionNeeded(state, alert)
 	// then
@@ -110,7 +117,7 @@ func Test_CheckActionNeeded_FoundButNotFiring(t *testing.T) {
 
 	// given
 	state := genState(nil)
-	alert := genAlert("pending", "", "", "")
+	alert := genAlert("pending", nil)
 
 	// when
 	actionNeeded := CheckActionNeeded(state, alert)
@@ -125,7 +132,7 @@ func Test_CheckActionNeeded_NotFound(t *testing.T) {
 
 	// given
 	state := genState(nil)
-	alert := genAlert("", "High Pod CPU", "", "")
+	alert := genAlert("", map[string]string{"alertname" : "High Pod CPU"})
 
 	// when
 	actionNeeded := CheckActionNeeded(state, alert)
@@ -165,7 +172,7 @@ func Test_CheckTemplateLabelsPresent_Error(t *testing.T) {
 
 func Test_ExtractRealLabelValues_Ok(t *testing.T) {
 	// given
-	alert := genAlert("", "", "", "")
+	alert := genAlert("", nil)
 	// when
 	realLabelValues := ExtractRealLabelValues(alert)
 	// then
@@ -186,4 +193,133 @@ func Test_CompileCommandTemplate_Ok(t *testing.T) {
 	commandReady := CompileCommandTemplate(action, realLabelValues, "TFD")
 	// then
 	th.AssertEqual(t, "test delete test_pod_name monitoring", commandReady)
+}
+
+func Test_TakeActions_Ok(t *testing.T) {
+	// given
+	shell := command.FakeCommandRunner{}
+	state := genState(
+		[]state.Action{
+			genAction("action1", "High Pod Memory", "echo $pod", []string{"pod"}),
+			genAction("action2", "High Pod CPU", "echo $pod $namespace", []string{"pod", "namespace"}),
+			genAction("action3", "High Pod Storage", "echo $cluster", []string{"pod", "cluster"}),
+		},
+	)
+	notification := genNotification(
+		[]Alert{
+			genAlert("firing", map[string]string{"alertname": "High Pod Memory", "pod": "test_pod_name", "namespace":"monitoring"}),
+			genAlert("pending", map[string]string{"alertname": "High Pod CPU", "pod": "test_pod_name", "namespace":"monitoring"}),
+			genAlert("resolved", map[string]string{"alertname": "High Pod Storage", "pod": "test_pod_name", "cluster":"test"}),
+		},
+	)
+	// when
+	err := TakeActions(&shell, state, notification, false)
+
+	// then
+	th.AssertNil(t, err)
+	th.AssertEqual(t, 1, len(shell.Calls))
+	th.AssertEqual(t, "bash -c echo test_pod_name", shell.Calls[0])
+}
+
+func Test_TakeActions_NoAlerts(t *testing.T) {
+	var buf bytes.Buffer
+	logging.Init("error", &buf)
+
+	// given
+	shell := command.FakeCommandRunner{}
+	state := genState(
+		[]state.Action{
+			genAction("action1", "High Pod Memory", "echo $pod", []string{"pod"}),
+			genAction("action2", "High Pod CPU", "echo $pod $namespace", []string{"pod", "namespace"}),
+			genAction("action3", "High Pod Storage", "echo $cluster", []string{"pod", "cluster"}),
+		},
+	)
+	notification := genNotification(
+		[]Alert{},
+	)
+	// when
+	err := TakeActions(&shell, state, notification, false)
+	// then
+	th.AssertNil(t, err)
+	th.AssertEqual(t, 0, len(shell.Calls))
+	th.AssertStringContains(t, "no alerts in notification", buf.String())
+}
+
+func Test_TakeActions_NoAlertName(t *testing.T) {
+	var buf bytes.Buffer
+	logging.Init("error", &buf)
+
+	// given
+	shell := command.FakeCommandRunner{}
+	state := genState(
+		[]state.Action{
+			genAction("action1", "High Pod Memory", "echo $pod", []string{"pod"}),
+			genAction("action2", "High Pod CPU", "echo $pod $namespace", []string{"pod", "namespace"}),
+			genAction("action3", "High Pod Storage", "echo $cluster", []string{"pod", "cluster"}),
+		},
+	)
+	notification := genNotification(
+		[]Alert{
+			genAlert("firing", map[string]string{"pod": "test_pod_name", "namespace":"monitoring"}),
+		},
+	)
+	// when
+	err := TakeActions(&shell, state, notification, false)
+	// then
+	th.AssertNil(t, err)
+	th.AssertEqual(t, 0, len(shell.Calls))
+	th.AssertStringContains(t, "no alert name label=[alertname], skipping=[{Status:firing Labels:map[namespace:monitoring pod:test_pod_name]}]", buf.String())
+}
+
+func Test_TakeActions_NoActionFound(t *testing.T) {
+	var buf bytes.Buffer
+	logging.Init("debug", &buf)
+
+	// given
+	shell := command.FakeCommandRunner{}
+	state := genState(
+		[]state.Action{
+			genAction("action1", "High Pod Memory", "echo $pod", []string{"pod"}),
+			genAction("action2", "High Pod CPU", "echo $pod $namespace", []string{"pod", "namespace"}),
+			genAction("action3", "High Pod Storage", "echo $cluster", []string{"pod", "cluster"}),
+		},
+	)
+	notification := genNotification(
+		[]Alert{
+			genAlert("firing", map[string]string{"alertname": "High Pod TTL", "pod": "test_pod_name", "namespace":"monitoring", "cluster":"test"}),
+		},
+	)
+	// when
+	err := TakeActions(&shell, state, notification, false)
+	// then
+	th.AssertNil(t, err)
+	th.AssertEqual(t, 0, len(shell.Calls))
+	th.AssertStringContains(t, "actions not found for alert=[High Pod TTL]", buf.String())
+}
+
+func Test_TakeActions_NoLabel(t *testing.T) {
+	var buf bytes.Buffer
+	logging.Init("error", &buf)
+
+	// given
+	shell := command.FakeCommandRunner{}
+	state := genState(
+		[]state.Action{
+			genAction("action1", "High Pod Memory", "echo $pod", []string{"pod"}),
+			genAction("action2", "High Pod CPU", "echo $pod $namespace", []string{"pod", "namespace"}),
+			genAction("action3", "High Pod Storage", "echo $cluster", []string{"pod", "cluster"}),
+		},
+	)
+	notification := genNotification(
+		[]Alert{
+			genAlert("firing", map[string]string{"alertname": "High Pod Memory", "namespace":"monitoring", "cluster":"test"}),
+		},
+	)
+	// when
+	err := TakeActions(&shell, state, notification, false)
+	// then
+	th.AssertNotNil(t, err)
+	th.AssertEqual(t, "no label 'pod' were present on the alert, action=[action1] cannot be taken for alert=[High Pod Memory]", err.Error())
+	th.AssertEqual(t, 0, len(shell.Calls))
+	th.AssertStringContains(t, "no label 'pod' were present on the alert, action=[action1] cannot be taken for alert=[High Pod Memory]", buf.String())
 }
