@@ -2,20 +2,15 @@ package main
 
 import (
 	"actioneer/internal/args"
-	"actioneer/internal/command"
 	"actioneer/internal/config"
 	"actioneer/internal/logging"
 	"actioneer/internal/processor"
 	"actioneer/internal/state"
-	"fmt"
 	"io"
 	"log/slog"
 	"net/http"
 	"os"
-	"strings"
 )
-
-var alertNameLabel = "alertname"
 
 type Server struct {
 	IsDryRun bool
@@ -23,51 +18,20 @@ type Server struct {
 }
 
 func (s Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	bytes, err := io.ReadAll(r.Body)
-	if err != nil {
-		panic(err)
+	bytes, errReadBody := io.ReadAll(r.Body)
+	if errReadBody != nil {
+		panic(errReadBody)
 	}
 	defer r.Body.Close()
 
-	notification, err := processor.ReadIncommingNotification(bytes)
-	if err != nil {
-		return
+	notification, errReadNotification := processor.ReadIncommingNotification(bytes)
+	if errReadNotification != nil {
+		panic(errReadNotification)
 	}
-
-	if !processor.CheckActionNeeded(s.State, notification) {
-		return
-	}
-
-	for _, alert := range notification.Alerts {
-		if alertName, ok := alert.Labels[alertNameLabel]; ok {
-			slog.Debug("processing alert: " + alertName)
-
-			action, found := s.State.GetActionByAlertName(alertName)
-			if !found {
-				slog.Warn("no action found for alert: " + alertName)
-				return
-			}
-			slog.Debug("command template: " + fmt.Sprint(action.CommandTemplate))
-
-			labelValues := make(map[string]string)
-			for _, templateKey := range action.TemplateKeys {
-				if value, ok := alert.Labels[templateKey]; ok {
-					labelValues[templateKey] = value
-				} else {
-					slog.Error("no label '" + templateKey + "' in alert, skipping alert: " + fmt.Sprintf("%+v", alert) + " and action: " + fmt.Sprintf("%+v", action))
-					return
-				}
-			}
-
-			commandReady := action.CommandTemplate
-			for k, v := range labelValues {
-				commandReady = strings.ReplaceAll(commandReady, s.State.SubstitutionPrefix+k, v)
-			}
-
-			command.Execute(command.CommandRunner{}, commandReady, s.IsDryRun)
-		} else {
-			slog.Error("no alert name label '" + alertNameLabel + "', skipping: " + fmt.Sprintf("%+v", alert))
-		}
+	
+	errTakeAction := processor.TakeActions(s.State, notification, s.IsDryRun)
+	if errTakeAction != nil {
+		panic(errTakeAction)
 	}
 }
 
