@@ -158,3 +158,15 @@ func Test_CheckTemplateLabelsPresent_Error(t *testing.T) {
 	th.AssertEqual(t, "no label 'pod' were present on the alert, action=[action1] cannot be taken for alert=[High Pod Memory]", err.Error())
 	th.AssertStringContains(t, "no label 'pod' were present on the alert, action=[action1] cannot be taken for alert=[High Pod Memory]", buf.String())
 }
+
+func Test_ExtractRealLabelValues_Ok(t *testing.T) {
+	// given
+	alert := genAlert("", "", "", "")
+	// when
+	realLabelValues := ExtractRealLabelValues(alert)
+	// then
+	th.AssertEqual(t, 3, len(realLabelValues))
+	th.AssertEqual(t, "High Pod Memory", realLabelValues["alertname"])
+	th.AssertEqual(t, "test_pod_name", realLabelValues["pod"])
+	th.AssertEqual(t, "monitoring", realLabelValues["namespace"])
+}
