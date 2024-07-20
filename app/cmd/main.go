@@ -2,6 +2,7 @@ package main
 
 import (
 	"actioneer/internal/args"
+	"actioneer/internal/command"
 	"actioneer/internal/config"
 	"actioneer/internal/logging"
 	"actioneer/internal/processor"
@@ -29,7 +30,8 @@ func (s Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		panic(errReadNotification)
 	}
 	
-	errTakeAction := processor.TakeActions(s.State, notification, s.IsDryRun)
+	shell := command.CommandRunner{}
+	errTakeAction := processor.TakeActions(shell, s.State, notification, s.IsDryRun)
 	if errTakeAction != nil {
 		panic(errTakeAction)
 	}
