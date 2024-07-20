@@ -10,3 +10,6 @@ jobs:
         run: ./bin/test.sh
       - name: Update coverage report
         uses: ncruces/go-coverage-report@v0
+        with:
+          output-dir: https://github.com/Evedel/automaton/wiki
+          file: coverage.txt
