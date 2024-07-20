@@ -12,6 +12,7 @@ import (
 var DefaultSubstitutionPrefix = "~"
 
 type Action struct {
+	Name 	  string
 	Alertname string
 	Command   string
 }

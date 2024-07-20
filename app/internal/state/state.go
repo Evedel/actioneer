@@ -6,6 +6,7 @@ import (
 )
 
 type Action struct {
+	Name 		  	string
 	Alertname       string
 	CommandTemplate string
 	TemplateKeys    []string
@@ -29,6 +30,7 @@ func InitState(config config.Config) (state State) {
 	state.SubstitutionPrefix = config.SubstitutionPrefix
 	for _, action := range config.Actions {
 		state.Actions = append(state.Actions, Action{
+			Name: action.Name,
 			Alertname:       action.Alertname,
 			CommandTemplate: action.Command,
 			TemplateKeys:    InitTemplateKeys(action.Command, config.SubstitutionPrefix),
