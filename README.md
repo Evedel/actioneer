@@ -1,5 +1,7 @@
 # k8s-automaton
 
+[![Go Coverage](https://github.com/USER/REPO/wiki/coverage.svg)](https://raw.githack.com/wiki/USER/REPO/coverage.html)
+
 That is a pet project to have some fun with golang, & testing, & ci/cd, & tdd.
 
 The approach that this 'operator' enables is a clear ANTI-pattern and goes against any reasonable operational models.
