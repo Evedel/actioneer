@@ -23,6 +23,7 @@ Imagine a cluster with:
         command: "kubectl delete pod $pod -n $namespace"
     ```
     once the alert is sent **k8s-automaton** way -- `command` is executed
+    `command` is just a shell executable command, make sure that needed tools present on the docker image and you will be able to trigger execution of anything via alertmanager webhook.
 
 ## TODO:
 - [ ] parametrise alertname key
