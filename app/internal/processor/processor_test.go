@@ -39,27 +39,31 @@ func Test_ReadIncommingNotification_Error(t *testing.T) {
 	th.AssertStringContains(t, "cannot unmarshal incomming bytes: {\\\"status\\\":\\\"firing\\\",\\\"alerts\\\":[{\\\"status\\\":\\\"firing\\\",\\\"labels\\\":{\\\"alertname\\\":\\\"High Pod Memory\\\",\\\"pod\\\":\\\"test_pod_name\\\",\\\"namespace\\\":\\\"monitoring\\\"}", buf.String())
 }
 
-func genAction(name string, alertName string, templateKeys []string) state.Action {
+func genAction(name string, alertName string, commandTemplate string, templateKeys []string) state.Action {
 	if name == "" {
 		name = "action1"
 	}
 	if alertName == "" {
 		alertName = "High Pod Memory"
 	}
+	if commandTemplate == "" {
+		commandTemplate = "echo $pod"
+	}
 	if len(templateKeys) == 0 {
 		templateKeys = []string{"pod"}
 	}
 	return state.Action{
-		Name:         name,
-		Alertname:    alertName,
-		TemplateKeys: templateKeys,
+		Name:         		name,
+		Alertname:    		alertName,
+		CommandTemplate: 	commandTemplate,
+		TemplateKeys: 		templateKeys,
 	}
 }
 
 func genState(actions []state.Action) state.State {
 	if len(actions) == 0 {
 		actions = []state.Action{
-			genAction("", "", nil),
+			genAction("", "", "", nil),
 		}
 	}
 	return state.State{
@@ -132,7 +136,7 @@ func Test_CheckActionNeeded_NotFound(t *testing.T) {
 
 func Test_CheckTemplateLabelsPresent_Ok(t *testing.T) {
 	// given
-	action := genAction("", "", []string{"pod"})
+	action := genAction("", "", "", []string{"pod"})
 	realLabelValues := map[string]string{
 		"pod": "test_pod_name",
 	}
@@ -147,7 +151,7 @@ func Test_CheckTemplateLabelsPresent_Error(t *testing.T) {
 	logging.Init("error", &buf)
 
 	// given
-	action := genAction("", "", []string{"pod"})
+	action := genAction("", "", "", []string{"pod"})
 	realLabelValues := map[string]string{
 		"namespace": "monitoring",
 	}
@@ -169,4 +173,17 @@ func Test_ExtractRealLabelValues_Ok(t *testing.T) {
 	th.AssertEqual(t, "High Pod Memory", realLabelValues["alertname"])
 	th.AssertEqual(t, "test_pod_name", realLabelValues["pod"])
 	th.AssertEqual(t, "monitoring", realLabelValues["namespace"])
+}
+
+func Test_CompileCommandTemplate_Ok(t *testing.T) {
+	// given
+	action := genAction("", "", "test delete TFDpod1 TFDnamespace1", nil)
+	realLabelValues := map[string]string{
+		"pod1": "test_pod_name",
+		"namespace1": "monitoring",
+	}
+	// when
+	commandReady := CompileCommandTemplate(action, realLabelValues, "TFD")
+	// then
+	th.AssertEqual(t, "test delete test_pod_name monitoring", commandReady)
 }
