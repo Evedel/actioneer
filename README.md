@@ -5,6 +5,9 @@
 That is a pet project to have some fun with golang, & testing, & ci/cd, & tdd.
 
 The approach that this 'operator' enables is a clear ANTI-pattern and goes against any reasonable operational models.
+
+However, it can also be used in a sane ways. I.e. do some real time aggregation of alerts, files report files, and store them into some external space. 
+
 If there is an alert or problem in the cluster => root cause should be fixed and not the bandaids automated.
 
 ## Idea
