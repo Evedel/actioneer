@@ -4,12 +4,18 @@ jobs:
   Test:
     runs-on: ubuntu-latest
     steps:
+
       - name: Check out
         uses: actions/checkout@v3
+
       - name: Test
         run: ./bin/test.sh
+
       - name: Update coverage report
-        uses: Evedel/go-coverage-report@v0.4.0-rc6
+        uses: ncruces/go-coverage-report@v0.3
         if: github.ref == 'refs/heads/main'
         with:
-          project-directory: ./app
+          coverage-file: ./app/coverage.out
+          report: true
+          chart: true
+          amend: true
