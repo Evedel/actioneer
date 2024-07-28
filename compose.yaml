@@ -4,5 +4,5 @@ services:
     volumes:
       - ./:/workspaces:cached
       - $HOME/.kube:/home/vscode/.kube
-    working_dir: /workspaces/app
+    working_dir: /workspaces
     entrypoint: go

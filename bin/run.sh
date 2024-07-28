@@ -9,4 +9,4 @@ actions:
     command: "kubectl delete pod ~pod -n ~namespace"
 EOF
 
-cd $project_path/app; go run cmd/main.go --log-level=debug  --config-path=/home/vscode/config.yaml
+cd $project_path; go run cmd/main.go --log-level=debug  --config-path=/home/vscode/config.yaml

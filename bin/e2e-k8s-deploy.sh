@@ -9,7 +9,7 @@ if [[ "$#" != "1" ]]; then
 fi
 
 $project_path/bin/build-images.sh $1
-kind load docker-image k8s-automaton:k8s-$1
+kind load docker-image actioneer:$1
 kubectl apply -f "./examples/k8s/*"
-kubectl rollout restart deployment k8s-automaton -n monitoring
+kubectl rollout restart deployment actioneer -n monitoring
 kubectl rollout restart deployment alertmanager -n monitoring

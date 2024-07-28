@@ -9,7 +9,6 @@ if [[ -x "$(command -v docker)" ]]; then
     go="docker compose run --rm go"
 else
     echo "container: yes"
-    cd $project_path/app
     go="go"
 fi
 

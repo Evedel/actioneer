@@ -13,8 +13,8 @@ data:
       group_wait: 30s
       group_interval: 5m
       repeat_interval: 1h
-      receiver: 'automaton'
+      receiver: 'actioneer'
     receivers:
-      - name: 'automaton'
+      - name: 'actioneer'
         webhook_configs:
-          - url: 'http://k8s-automaton:8080/'
+          - url: 'http://actioneer:8080/'

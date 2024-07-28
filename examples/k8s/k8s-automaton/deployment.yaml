@@ -2,33 +2,33 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   labels:
-    app: k8s-automaton
-  name: k8s-automaton
+    app: actioneer
+  name: actioneer
   namespace: monitoring
 spec:
   replicas: 1
   selector:
     matchLabels:
-      app: k8s-automaton
+      app: actioneer
   strategy:
   template:
     metadata:
       labels:
-        app: k8s-automaton
+        app: actioneer
     spec:
-      serviceAccountName: k8s-automaton
+      serviceAccountName: actioneer
       containers:
       - args:
           - --log-level=debug
-          - --config-path=/etc/k8s-automaton/config.yaml
-        image: k8s-automaton:k8s-v0.1.1
-        name: k8s-automaton
+          - --config-path=/etc/actioneer/config.yaml
+        image: actioneer:v0.1.1
+        name: actioneer
         ports:
           - containerPort: 8080
         volumeMounts:
-          - mountPath: /etc/k8s-automaton
-            name: k8s-automaton
+          - mountPath: /etc/actioneer
+            name: actioneer
       volumes:
         - configMap:
-            name: k8s-automaton
-          name: k8s-automaton
+            name: actioneer
+          name: actioneer
