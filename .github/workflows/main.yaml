@@ -12,8 +12,8 @@ jobs:
         run: ./bin/test.sh
 
       - name: Update coverage report
-        uses: ncruces/go-coverage-report@v0.3
-        if: github.ref == 'refs/heads/main'
+        uses: ncruces/go-coverage-report@v0.3.0
+        # if: github.ref == 'refs/heads/main'
         with:
           coverage-file: ./app/coverage.out
           report: true
