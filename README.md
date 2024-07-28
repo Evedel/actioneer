@@ -6,9 +6,9 @@ That is a pet project to have some fun with golang, & testing, & ci/cd, & tdd.
 
 The approach that this 'operator' enables is a clear ANTI-pattern and goes against any reasonable operational models.
 
-However, it can also be used in a sane ways. I.e. do some real time aggregation of alerts, files report files, and store them into some external space. 
+If there is an alert or problem in the cluster => the root cause should be fixed and not the bandaids automated.
 
-If there is an alert or problem in the cluster => root cause should be fixed and not the bandaids automated.
+However, it can also be used in a sane way. I.e. do some real-time aggregation of alerts, report combination, wire notification into another external store not easily reachable. 
 
 ## Idea
 [actioneer/examples/k8s](https://github.com/Evedel/actioneer/tree/main/examples/k8s)
@@ -32,9 +32,11 @@ Imagine a cluster with:
  - **actioneer** -- container with the binary + needed tools, has a configmap with rules in the form of
     ```
     actions:
-      - alertname: "Test Alert"
+      - name: "Restart Flake Pod"
+        alertname: "Alert That Is Triggered Without Reason And Fixed By Pod Restart"
         command: "kubectl delete pod $pod -n $namespace"
     ```
     once the alert is sent **actioneer** way -- `command` is executed
 
     `command` is just a shell executable, make sure that needed tools present on the docker image and you will be able to trigger execution of anything via alertmanager webhook.
+    
