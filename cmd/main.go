@@ -5,6 +5,7 @@ import (
 	"actioneer/internal/command"
 	"actioneer/internal/config"
 	"actioneer/internal/logging"
+	"actioneer/internal/notification"
 	"actioneer/internal/processor"
 	"actioneer/internal/state"
 	"io"
@@ -16,6 +17,7 @@ import (
 type Server struct {
 	IsDryRun bool
 	State    state.State
+	Shell  	 command.ICommandRunner
 }
 
 func (s Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
@@ -25,13 +27,15 @@ func (s Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	}
 	defer r.Body.Close()
 
-	notification, errReadNotification := processor.ReadIncommingNotification(bytes)
-	if errReadNotification != nil {
-		panic(errReadNotification)
+	notificationExternal, errReadExternalNotification := notification.ReadAlertmanagerNotification(bytes)
+	if errReadExternalNotification != nil {
+		panic(errReadExternalNotification)
 	}
+
+	notification := notification.ToInternal(notificationExternal, s.State)
 	
-	shell := command.CommandRunner{}
-	errTakeAction := processor.TakeActions(shell, s.State, notification, s.IsDryRun)
+	
+	errTakeAction := processor.TakeActions(s.Shell, s.State, notification, s.IsDryRun)
 	if errTakeAction != nil {
 		panic(errTakeAction)
 	}
@@ -54,7 +58,7 @@ func main() {
 
 	actions := state.InitState(cfg)
 
-	s := Server{IsDryRun: *args.IsDryRun, State: actions}
+	s := Server{IsDryRun: *args.IsDryRun, State: actions, Shell: command.CommandRunner{}}
 	mux := http.NewServeMux()
 	mux.Handle("/", s)
 	if err := http.ListenAndServe(":8080", mux); err != nil {

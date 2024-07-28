@@ -3,42 +3,12 @@ package processor
 import (
 	"actioneer/internal/command"
 	"actioneer/internal/logging"
+	"actioneer/internal/notification"
 	"actioneer/internal/state"
 	th "actioneer/internal/testing_helper"
 	"bytes"
 	"testing"
 )
-
-func Test_ReadIncommingNotification_Ok(t *testing.T) {
-	// given
-	incommingBytes := []byte(`{"status":"firing","alerts":[{"status":"firing","labels":{"alertname":"High Pod Memory","pod":"test_pod_name","namespace":"monitoring"}}]}`)
-	// when
-	notification, err := ReadIncommingNotification(incommingBytes)
-	// then
-	if err != nil {
-		t.Error("expected no error, got: " + err.Error())
-	}
-	th.AssertNil(t, err)
-	th.AssertEqual(t, 1, len(notification.Alerts))
-	th.AssertEqual(t, "firing", notification.Alerts[0].Status)
-	th.AssertEqual(t, "High Pod Memory", notification.Alerts[0].Labels["alertname"])
-	th.AssertEqual(t, "test_pod_name", notification.Alerts[0].Labels["pod"])
-	th.AssertEqual(t, "monitoring", notification.Alerts[0].Labels["namespace"])
-}
-
-func Test_ReadIncommingNotification_Error(t *testing.T) {
-	var buf bytes.Buffer
-	logging.Init("error", &buf)
-
-	// given
-	incommingBytes := []byte(`{"status":"firing","alerts":[{"status":"firing","labels":{"alertname":"High Pod Memory","pod":"test_pod_name","namespace":"monitoring"}}`)
-	// when
-	_, err := ReadIncommingNotification(incommingBytes)
-	// then
-	th.AssertNotNil(t, err)
-	th.AssertEqual(t, "unexpected end of JSON input", err.Error())
-	th.AssertStringContains(t, "cannot unmarshal incomming bytes: {\\\"status\\\":\\\"firing\\\",\\\"alerts\\\":[{\\\"status\\\":\\\"firing\\\",\\\"labels\\\":{\\\"alertname\\\":\\\"High Pod Memory\\\",\\\"pod\\\":\\\"test_pod_name\\\",\\\"namespace\\\":\\\"monitoring\\\"}", buf.String())
-}
 
 func genAction(name string, alertName string, commandTemplate string, templateKeys []string) state.Action {
 	if name == "" {
@@ -73,7 +43,7 @@ func genState(actions []state.Action) state.State {
 	}
 }
 
-func genAlert(status string, labels map[string]string) Alert {
+func genAlert(status string, labels map[string]string) notification.Alert {
 	if status == "" {
 		status = "firing"
 	}
@@ -84,19 +54,20 @@ func genAlert(status string, labels map[string]string) Alert {
 			"namespace": "monitoring",
 		}
 	}
-	return Alert{
+	return notification.Alert{
+		Name: labels["alertname"],
 		Status: status,
 		Labels: labels,
 	}
 }
 
-func genNotification(alerts []Alert) Notification {
+func genNotification(alerts []notification.Alert) notification.Notification {
 	if alerts == nil {
-		alerts = []Alert{
+		alerts = []notification.Alert{
 			genAlert("", nil),
 		}
 	}
-	return Notification{
+	return notification.Notification{
 		Alerts: alerts,
 	}
 }
@@ -206,7 +177,7 @@ func Test_TakeActions_Ok(t *testing.T) {
 		},
 	)
 	notification := genNotification(
-		[]Alert{
+		[]notification.Alert{
 			genAlert("firing", map[string]string{"alertname": "High Pod Memory", "pod": "test_pod_name", "namespace":"monitoring"}),
 			genAlert("pending", map[string]string{"alertname": "High Pod CPU", "pod": "test_pod_name", "namespace":"monitoring"}),
 			genAlert("resolved", map[string]string{"alertname": "High Pod Storage", "pod": "test_pod_name", "cluster":"test"}),
@@ -235,7 +206,7 @@ func Test_TakeActions_NoAlerts(t *testing.T) {
 		},
 	)
 	notification := genNotification(
-		[]Alert{},
+		[]notification.Alert{},
 	)
 	// when
 	err := TakeActions(&shell, state, notification, false)
@@ -243,32 +214,6 @@ func Test_TakeActions_NoAlerts(t *testing.T) {
 	th.AssertNil(t, err)
 	th.AssertEqual(t, 0, len(shell.Calls))
 	th.AssertStringContains(t, "no alerts in notification", buf.String())
-}
-
-func Test_TakeActions_NoAlertName(t *testing.T) {
-	var buf bytes.Buffer
-	logging.Init("error", &buf)
-
-	// given
-	shell := command.FakeCommandRunner{}
-	state := genState(
-		[]state.Action{
-			genAction("action1", "High Pod Memory", "echo $pod", []string{"pod"}),
-			genAction("action2", "High Pod CPU", "echo $pod $namespace", []string{"pod", "namespace"}),
-			genAction("action3", "High Pod Storage", "echo $cluster", []string{"pod", "cluster"}),
-		},
-	)
-	notification := genNotification(
-		[]Alert{
-			genAlert("firing", map[string]string{"pod": "test_pod_name", "namespace":"monitoring"}),
-		},
-	)
-	// when
-	err := TakeActions(&shell, state, notification, false)
-	// then
-	th.AssertNil(t, err)
-	th.AssertEqual(t, 0, len(shell.Calls))
-	th.AssertStringContains(t, "no alert name label=[alertname], skipping=[{Status:firing Labels:map[namespace:monitoring pod:test_pod_name]}]", buf.String())
 }
 
 func Test_TakeActions_NoActionFound(t *testing.T) {
@@ -285,7 +230,7 @@ func Test_TakeActions_NoActionFound(t *testing.T) {
 		},
 	)
 	notification := genNotification(
-		[]Alert{
+		[]notification.Alert{
 			genAlert("firing", map[string]string{"alertname": "High Pod TTL", "pod": "test_pod_name", "namespace":"monitoring", "cluster":"test"}),
 		},
 	)
@@ -311,7 +256,7 @@ func Test_TakeActions_NoLabel(t *testing.T) {
 		},
 	)
 	notification := genNotification(
-		[]Alert{
+		[]notification.Alert{
 			genAlert("firing", map[string]string{"alertname": "High Pod Memory", "namespace":"monitoring", "cluster":"test"}),
 		},
 	)

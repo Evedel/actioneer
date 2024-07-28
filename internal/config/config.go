@@ -10,6 +10,7 @@ import (
 )
 
 var DefaultSubstitutionPrefix = "~"
+var DefaultAlertNameKey = "alertname"
 
 type Action struct {
 	Name 	  string
@@ -21,6 +22,7 @@ type Config struct {
 	Version            string
 	Actions            []Action
 	SubstitutionPrefix string
+	AlertNameKey	   string
 }
 
 type IConfigReader interface {
@@ -68,6 +70,12 @@ func Read(icr IConfigReader, path string) (Config, error) {
 		slog.Info("no substitution prefix defined, using default: " + DefaultSubstitutionPrefix)
 		config.SubstitutionPrefix = DefaultSubstitutionPrefix
 	}
+
+	if config.AlertNameKey == "" {
+		slog.Info("no alertname key defined, using default: " + DefaultAlertNameKey)
+		config.AlertNameKey = DefaultAlertNameKey
+	}
+
 	return config, nil
 }
 

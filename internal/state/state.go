@@ -14,6 +14,7 @@ type Action struct {
 
 type State struct {
 	SubstitutionPrefix string
+	AlertNameKey	   string
 	Actions            []Action
 }
 
@@ -28,6 +29,7 @@ func InitTemplateKeys(template string, substitutionPrefix string) (templateKeys 
 
 func InitState(config config.Config) (state State) {
 	state.SubstitutionPrefix = config.SubstitutionPrefix
+	state.AlertNameKey = config.AlertNameKey
 	for _, action := range config.Actions {
 		state.Actions = append(state.Actions, Action{
 			Name: action.Name,

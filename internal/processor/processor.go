@@ -2,43 +2,20 @@ package processor
 
 import (
 	"actioneer/internal/command"
+	"actioneer/internal/notification"
 	"actioneer/internal/state"
-	"encoding/json"
 	"fmt"
 	"log/slog"
 	"strings"
 )
 
-const alertNameLabel = "alertname"
-
-type Alert struct {
-	Status string
-	Labels map[string]string
-}
-
-type Notification struct {
-	Alerts []Alert
-}
-
-func ReadIncommingNotification(bytes []byte) (Notification, error) {
-	slog.Debug("incomming bytes: " + fmt.Sprintf("%+v", string(bytes)))
-	var notification Notification
-	err := json.Unmarshal(bytes, &notification)
-	if err != nil {
-		slog.Error("cannot unmarshal incomming bytes: " + fmt.Sprintf("%+v", string(bytes)))
-		slog.Error(err.Error())
+func CheckActionNeeded(state state.State, alert notification.Alert) bool {
+	_, found := state.GetActionByAlertName(alert.Name)
+	if found && (alert.Status == "firing") {
+		slog.Debug("action found for alert=[" + fmt.Sprint(alert.Name)+"]")
+		return true
 	}
-	return notification, err
-}
-
-func CheckActionNeeded(state state.State, alert Alert) bool {
-	if alertName, ok := alert.Labels[alertNameLabel]; ok {
-		_, found := state.GetActionByAlertName(alertName)
-		if found && (alert.Status == "firing") {
-			return true
-		}
-	}
-	slog.Debug("actions not found for alert=[" + fmt.Sprint(alert.Labels[alertNameLabel])+"]")
+	slog.Debug("actions not found for alert=[" + fmt.Sprint(alert.Name)+"]")
 	return false
 }
 
@@ -54,7 +31,7 @@ func CheckTemplateLabelsPresent(action state.Action, realLabelValues map[string]
 	return nil
 }
 
-func ExtractRealLabelValues(alert Alert) (map[string]string) {
+func ExtractRealLabelValues(alert notification.Alert) (map[string]string) {
 	realLabelValues := make(map[string]string)
 	for k, v := range alert.Labels {
 		realLabelValues[k] = v
@@ -70,7 +47,7 @@ func CompileCommandTemplate(action state.Action, realLabelValues map[string]stri
 	return commandReady
 }
 
-func TakeActions(shell command.ICommandRunner, state state.State, notification Notification, isDryRun bool) error {
+func TakeActions(shell command.ICommandRunner, state state.State, notification notification.Notification, isDryRun bool) error {
 	slog.Debug("incomming notification=[" + fmt.Sprint(notification)+"]")
 
 	if len(notification.Alerts) == 0 {
@@ -79,20 +56,11 @@ func TakeActions(shell command.ICommandRunner, state state.State, notification N
 	}
 
 	for _, alert := range notification.Alerts {
-		if _, ok := alert.Labels[alertNameLabel]; !ok {
-			slog.Error("no alert name label=[" + alertNameLabel + "], skipping=[" + fmt.Sprintf("%+v", alert)+"]")
-			continue
-		}
-
 		if !CheckActionNeeded(state, alert) {
-			slog.Debug("skipping alert=[" + fmt.Sprintf("%+v", alert)+"] as no defined action found")
 			continue
 		}
 
-		alertName := alert.Labels[alertNameLabel]
-		slog.Debug("processing alert=[" + alertName+"]")
-
-		action, _ := state.GetActionByAlertName(alertName)
+		action, _ := state.GetActionByAlertName(alert.Name)
 		slog.Debug("command template=[" + fmt.Sprint(action.CommandTemplate)+"]")
 
 		realLabelValues := ExtractRealLabelValues(alert)
