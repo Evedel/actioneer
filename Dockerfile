@@ -1,5 +1,5 @@
 FROM golang:1.21.1 AS build
-COPY ./app /app
+COPY . /app
 WORKDIR /app
 RUN go build -o actioneer cmd/main.go
 RUN curl -LO "https://dl.k8s.io/release/$(curl -L -s https://dl.k8s.io/release/stable.txt)/bin/linux/amd64/kubectl" && \
