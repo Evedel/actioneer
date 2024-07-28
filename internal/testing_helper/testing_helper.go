@@ -1,9 +1,22 @@
 package testing_helper
 
 import (
+	"actioneer/internal/state"
 	"strings"
 	"testing"
 )
+
+type Dict map[string]string
+
+func GetState(options map[string]string) state.State {
+	alertNameKey := "alertname"
+	if options["alertname"] != "" {
+		alertNameKey = options["alertname"]
+	}
+	return state.State{
+		AlertNameKey: alertNameKey,
+	}
+}
 
 func AssertNil(t *testing.T, err error) {
 	if err != nil {

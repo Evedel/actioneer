@@ -16,17 +16,6 @@ type Notification struct {
 	Alerts []Alert
 }
 
-func getAlertName(alert AlertExternal, alertNameKey string) (string, bool) {
-	slog.Debug("Getting alert name from external alert")
-
-	alertName := ""
-	ok := false
-	if alertName, ok = alert.Labels[alertNameKey]; !ok {
-		slog.Debug("no alert name label=[" + alertNameKey + "], skipping=[" + fmt.Sprintf("%+v", alert)+"]")
-	}
-	return alertName, ok
-}
-
 func ToInternal(ne NotificationExternal, state state.State) Notification {
 	slog.Debug("Converting external notification to internal")
 
@@ -34,6 +23,7 @@ func ToInternal(ne NotificationExternal, state state.State) Notification {
 	for _, ae := range ne.Alerts {
 		alertName, ok := getAlertName(ae, state.AlertNameKey)
 		if !ok {
+			slog.Warn("no alert name label=[" + state.AlertNameKey + "], skipping=[" + fmt.Sprintf("%+v", ae)+"]")
 			continue
 		}
 		n.Alerts = append(n.Alerts, Alert{
@@ -44,4 +34,15 @@ func ToInternal(ne NotificationExternal, state state.State) Notification {
 		n.Alerts[len(n.Alerts)-1].Labels["status"] = ae.Status
 	}
 	return n
+}
+
+func getAlertName(alert AlertExternal, alertNameKey string) (string, bool) {
+	slog.Debug("Getting alert name from external alert")
+
+	alertName := ""
+	ok := false
+	if alertName, ok = alert.Labels[alertNameKey]; !ok {
+		slog.Debug("no alert name label=[" + alertNameKey + "], skipping=[" + fmt.Sprintf("%+v", alert)+"]")
+	}
+	return alertName, ok
 }

@@ -55,6 +55,7 @@ func genAlert(status string, labels map[string]string) notification.Alert {
 		}
 	}
 	return notification.Alert{
+		Name: labels["alertname"],
 		Status: status,
 		Labels: labels,
 	}
