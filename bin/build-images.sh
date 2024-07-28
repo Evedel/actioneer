@@ -9,4 +9,4 @@ if [[ "$#" != "1" ]]; then
 fi
 tag=$1
 
-docker build --target=k8s --tag k8s-automaton:k8s-$tag .
+docker build --target=k8s --tag actioneer:$tag .

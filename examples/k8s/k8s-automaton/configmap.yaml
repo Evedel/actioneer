@@ -2,10 +2,10 @@
 apiVersion: v1
 kind: ConfigMap
 metadata:
-  name: k8s-automaton
+  name: actioneer
   namespace: monitoring
   labels:
-    app: k8s-automaton
+    app: actioneer
 data:
   config.yaml: |-
     version: v1
