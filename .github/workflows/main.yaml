@@ -16,6 +16,6 @@ jobs:
         # if: github.ref == 'refs/heads/main'
         with:
           coverage-file: ./app/coverage.out
-          report: true
+          report: false
           chart: true
           amend: true
