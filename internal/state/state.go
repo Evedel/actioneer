@@ -14,6 +14,7 @@ type Action struct {
 
 type State struct {
 	SubstitutionPrefix string
+	AlertNameKey	   string
 	Actions            []Action
 }
 
