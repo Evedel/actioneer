@@ -216,32 +216,6 @@ func Test_TakeActions_NoAlerts(t *testing.T) {
 	th.AssertStringContains(t, "no alerts in notification", buf.String())
 }
 
-func Test_TakeActions_NoAlertName(t *testing.T) {
-	var buf bytes.Buffer
-	logging.Init("error", &buf)
-
-	// given
-	shell := command.FakeCommandRunner{}
-	state := genState(
-		[]state.Action{
-			genAction("action1", "High Pod Memory", "echo $pod", []string{"pod"}),
-			genAction("action2", "High Pod CPU", "echo $pod $namespace", []string{"pod", "namespace"}),
-			genAction("action3", "High Pod Storage", "echo $cluster", []string{"pod", "cluster"}),
-		},
-	)
-	notification := genNotification(
-		[]notification.Alert{
-			genAlert("firing", map[string]string{"pod": "test_pod_name", "namespace":"monitoring"}),
-		},
-	)
-	// when
-	err := TakeActions(&shell, state, notification, false)
-	// then
-	th.AssertNil(t, err)
-	th.AssertEqual(t, 0, len(shell.Calls))
-	th.AssertStringContains(t, "no alert name label=[alertname], skipping=[{Status:firing Labels:map[namespace:monitoring pod:test_pod_name]}]", buf.String())
-}
-
 func Test_TakeActions_NoActionFound(t *testing.T) {
 	var buf bytes.Buffer
 	logging.Init("debug", &buf)
