@@ -17,7 +17,7 @@ import (
 type Server struct {
 	IsDryRun bool
 	State    state.State
-	Shell  	 command.ICommandRunner
+	Shell    command.ICommandRunner
 }
 
 func (s Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
@@ -33,8 +33,7 @@ func (s Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	}
 
 	notification := notification.ToInternal(notificationExternal, s.State)
-	
-	
+
 	errTakeAction := processor.TakeActions(s.Shell, s.State, notification, s.IsDryRun)
 	if errTakeAction != nil {
 		panic(errTakeAction)

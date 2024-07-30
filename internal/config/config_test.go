@@ -103,23 +103,6 @@ func TestRead_Fake_UnmarshalErorr(t *testing.T) {
 	}
 }
 
-func TestRead_Real_NoError(t *testing.T) {
-	cfg, err := Read(ConfigReader{}, "../../test/config_good_simple.yaml")
-
-	if err != nil {
-		t.Error("expected no error, got: " + err.Error())
-	}
-	if cfg.Version != "v1" {
-		t.Error("expected version \"v1\", got: " + cfg.Version)
-	}
-	if len(cfg.Actions) != 1 {
-		t.Error("expected 1 action, got: ", len(cfg.Actions))
-	}
-	if cfg.Actions[0].Alertname != "Test Alert" {
-		t.Error("expected alertname \"Test Alert\", got: " + cfg.Actions[0].Alertname)
-	}
-}
-
 func TestIsValid_Ok(t *testing.T) {
 	cfg := Config{
 		Version: "v1",

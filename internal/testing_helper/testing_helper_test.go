@@ -72,6 +72,7 @@ func Test_AssertEqual_Fail(t *testing.T) {
 		t.Error("expected 1 not equal 2 error, got nil")
 	}
 }
+
 func Test_AssertStringContains_Pass(t *testing.T) {
 	mt := &MockTesting{}
 	AssertStringContains(mt, "test", "test string that shold be found")
