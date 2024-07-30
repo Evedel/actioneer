@@ -13,7 +13,7 @@ var DefaultSubstitutionPrefix = "~"
 var DefaultAlertNameKey = "alertname"
 
 type Action struct {
-	Name 	  string
+	Name      string
 	Alertname string
 	Command   string
 }
@@ -22,7 +22,7 @@ type Config struct {
 	Version            string
 	Actions            []Action
 	SubstitutionPrefix string
-	AlertNameKey	   string
+	AlertNameKey       string
 }
 
 type IConfigReader interface {
@@ -80,7 +80,7 @@ func Read(icr IConfigReader, path string) (Config, error) {
 }
 
 func IsValid(config Config) (result bool) {
-	if config.Version != "v1" {
+	if config.Version != "1" {
 		slog.Error("wrong config version: " + config.Version)
 		return false
 	}
