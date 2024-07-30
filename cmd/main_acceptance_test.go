@@ -2,6 +2,7 @@ package main
 
 import (
 	th "actioneer/internal/testing_helper"
+	"errors"
 	"fmt"
 	"math/rand"
 	"os"
@@ -11,7 +12,7 @@ import (
 	"testing"
 )
 
-func Test_Fails_WithoutConfig(t *testing.T) {
+func Test_Fails_NoConfig(t *testing.T) {
 	binName := BuildApp(t)
 
 	cmd := []string{"./" + binName}
@@ -23,7 +24,7 @@ func Test_Fails_WithoutConfig(t *testing.T) {
 	CleanUp(t, binName)
 }
 
-func Test_Fails_WithConfig_NoVersion(t *testing.T) {
+func Test_Fails_NoVersionInConfig(t *testing.T) {
 	binName := BuildApp(t)
 
 	MakeTestConfig(t, "")
@@ -35,14 +36,10 @@ func Test_Fails_WithConfig_NoVersion(t *testing.T) {
 	CleanUp(t, binName)
 }
 
-func Test_Fails_WithConfig_InvalidVersion(t *testing.T) {
+func Test_Fails_InvalidVersionInConfig(t *testing.T) {
 	binName := BuildApp(t)
 
 	config := `version: 9999999
-actions:
-  - name: "test"
-    command: "echo test"
-    condition: "true"
 `
 	MakeTestConfig(t, config)
 	cmd := []string{"./" + binName, "-config-path", "config.yaml"}
@@ -50,6 +47,109 @@ actions:
 
 	th.AssertStringContains(t, "\"wrong config version: 9999999\"", err.Error())
 	th.AssertNotNil(t, err)
+
+	CleanUp(t, binName)
+}
+
+func Test_Fails_NoActionsDefined(t *testing.T) {
+	binName := BuildApp(t)
+
+	config := `version: 1
+`
+	MakeTestConfig(t, config)
+	cmd := []string{"./" + binName, "-config-path", "config.yaml"}
+	err := sh(cmd, false)
+
+	th.AssertStringContains(t, "\"no actions defined\"", err.Error())
+	th.AssertNotNil(t, err)
+
+	CleanUp(t, binName)
+}
+
+func Test_Fails_IncorrectActionInConfig(t *testing.T) {
+	binName := BuildApp(t)
+
+	config := `version: 1
+actions:
+  - test
+`
+	MakeTestConfig(t, config)
+	cmd := []string{"./" + binName, "-config-path", "config.yaml"}
+	err := sh(cmd, false)
+
+	th.AssertStringContains(t, "cannot unmarshal", err.Error())
+	th.AssertNotNil(t, err)
+
+	CleanUp(t, binName)
+}
+
+func Test_Fails_NoAlertnameInAction(t *testing.T) {
+	binName := BuildApp(t)
+
+	config := `version: 1
+actions:
+  - name: test
+`
+	MakeTestConfig(t, config)
+	cmd := []string{"./" + binName, "-config-path", "config.yaml"}
+	err := sh(cmd, false)
+
+	th.AssertStringContains(t, "empty alertname in action", err.Error())
+	th.AssertNotNil(t, err)
+
+	CleanUp(t, binName)
+}
+
+func Test_Fails_NoNameInAction(t *testing.T) {
+	binName := BuildApp(t)
+
+	config := `version: 1
+actions:
+  - alertname: test
+`
+	MakeTestConfig(t, config)
+	cmd := []string{"./" + binName, "-config-path", "config.yaml"}
+	err := sh(cmd, false)
+
+	th.AssertStringContains(t, "empty name in action", err.Error())
+	th.AssertNotNil(t, err)
+
+	CleanUp(t, binName)
+}
+
+func Test_Fails_NoCommandInAction(t *testing.T) {
+	binName := BuildApp(t)
+
+	config := `version: 1
+actions:
+  - name: test
+    alertname: test
+`
+	MakeTestConfig(t, config)
+	cmd := []string{"./" + binName, "-config-path", "config.yaml"}
+	err := sh(cmd, false)
+
+	th.AssertStringContains(t, "empty command in action", err.Error())
+	th.AssertNotNil(t, err)
+
+	CleanUp(t, binName)
+}
+
+func Test_CanBeStarted(t *testing.T) {
+	binName := BuildApp(t)
+
+	config := `version: 1
+actions:
+  - name: test
+    alertname: test
+    command: echo "test"
+`
+	MakeTestConfig(t, config)
+	// cmd := []string{"./" + binName, "-config-path", "config.yaml"}
+	// err := sh(cmd, false)
+
+	// th.AssertNil(t, err)
+	th.AssertNil(t, errors.New("there is no way to test health endpoint currently"))
 
 	CleanUp(t, binName)
 }
