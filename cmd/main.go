@@ -4,6 +4,7 @@ import (
 	"actioneer/internal/args"
 	"actioneer/internal/command"
 	"actioneer/internal/config"
+	"actioneer/internal/healthz"
 	"actioneer/internal/logging"
 	"actioneer/internal/notification"
 	"actioneer/internal/processor"
@@ -17,7 +18,7 @@ import (
 type Server struct {
 	IsDryRun bool
 	State    state.State
-	Shell  	 command.ICommandRunner
+	Shell    command.ICommandRunner
 }
 
 func (s Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
@@ -33,8 +34,7 @@ func (s Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	}
 
 	notification := notification.ToInternal(notificationExternal, s.State)
-	
-	
+
 	errTakeAction := processor.TakeActions(s.Shell, s.State, notification, s.IsDryRun)
 	if errTakeAction != nil {
 		panic(errTakeAction)
@@ -61,6 +61,7 @@ func main() {
 	s := Server{IsDryRun: *args.IsDryRun, State: actions, Shell: command.CommandRunner{}}
 	mux := http.NewServeMux()
 	mux.Handle("/", s)
+	mux.HandleFunc("/healthz", healthz.ServeHTTP)
 	if err := http.ListenAndServe(":8080", mux); err != nil {
 		slog.Error(err.Error())
 		os.Exit(2)
