@@ -12,15 +12,17 @@ import (
 	"testing"
 )
 
+const verbose = false
+
 func Test_Fails_NoConfig(t *testing.T) {
 	binName := BuildApp(t)
 
 	cmd := []string{"./" + binName}
 	cmdChanel := make(chan int)
-	cmdHandle, errCMDCreate := sh(cmd, false, cmdChanel)
+	cmdHandle, errCMDCreate := sh(cmd, verbose, cmdChanel)
 	th.AssertNil(t, errCMDCreate)
 
-	combinedStd, exited := wait_sh(cmdHandle, cmdChanel, false)
+	combinedStd, exited := wait_sh(cmdHandle, cmdChanel, verbose)
 	th.AssertEqual(t, true, exited)
 	th.AssertStringContains(t, "config.yaml", combinedStd)
 	th.AssertStringContains(t, "no such file or directory", combinedStd)
@@ -34,10 +36,10 @@ func Test_Fails_NoVersionInConfig(t *testing.T) {
 	MakeTestConfig(t, "")
 	cmd := []string{"./" + binName, "-config-path", "config.yaml"}
 	cmdChanel := make(chan int)
-	cmdHandle, errCMDCreate := sh(cmd, false, cmdChanel)
+	cmdHandle, errCMDCreate := sh(cmd, verbose, cmdChanel)
 	th.AssertNil(t, errCMDCreate)
 
-	combinedStd, exited := wait_sh(cmdHandle, cmdChanel, false)
+	combinedStd, exited := wait_sh(cmdHandle, cmdChanel, verbose)
 	th.AssertEqual(t, true, exited)
 	th.AssertStringContains(t, "\"wrong config version: \"", combinedStd)
 
@@ -52,10 +54,10 @@ func Test_Fails_InvalidVersionInConfig(t *testing.T) {
 	MakeTestConfig(t, config)
 	cmd := []string{"./" + binName, "-config-path", "config.yaml"}
 	cmdChanel := make(chan int)
-	cmdHandle, errCMDCreate := sh(cmd, false, cmdChanel)
+	cmdHandle, errCMDCreate := sh(cmd, verbose, cmdChanel)
 	th.AssertNil(t, errCMDCreate)
 
-	combinedStd, exited := wait_sh(cmdHandle, cmdChanel, false)
+	combinedStd, exited := wait_sh(cmdHandle, cmdChanel, verbose)
 	th.AssertEqual(t, true, exited)
 	th.AssertStringContains(t, "\"wrong config version: 9999999\"", combinedStd)
 
@@ -70,10 +72,10 @@ func Test_Fails_NoActionsDefined(t *testing.T) {
 	MakeTestConfig(t, config)
 	cmd := []string{"./" + binName, "-config-path", "config.yaml"}
 	cmdChanel := make(chan int)
-	cmdHandle, errCMDCreate := sh(cmd, false, cmdChanel)
+	cmdHandle, errCMDCreate := sh(cmd, verbose, cmdChanel)
 	th.AssertNil(t, errCMDCreate)
 
-	combinedStd, exited := wait_sh(cmdHandle, cmdChanel, false)
+	combinedStd, exited := wait_sh(cmdHandle, cmdChanel, verbose)
 	th.AssertEqual(t, true, exited)
 	th.AssertStringContains(t, "\"no actions defined\"", combinedStd)
 
@@ -90,10 +92,10 @@ actions:
 	MakeTestConfig(t, config)
 	cmd := []string{"./" + binName, "-config-path", "config.yaml"}
 	cmdChanel := make(chan int)
-	cmdHandle, errCMDCreate := sh(cmd, false, cmdChanel)
+	cmdHandle, errCMDCreate := sh(cmd, verbose, cmdChanel)
 	th.AssertNil(t, errCMDCreate)
 
-	combinedStd, exited := wait_sh(cmdHandle, cmdChanel, false)
+	combinedStd, exited := wait_sh(cmdHandle, cmdChanel, verbose)
 	th.AssertEqual(t, true, exited)
 	th.AssertStringContains(t, "cannot unmarshal", combinedStd)
 
@@ -110,10 +112,10 @@ actions:
 	MakeTestConfig(t, config)
 	cmd := []string{"./" + binName, "-config-path", "config.yaml"}
 	cmdChanel := make(chan int)
-	cmdHandle, errCMDCreate := sh(cmd, false, cmdChanel)
+	cmdHandle, errCMDCreate := sh(cmd, verbose, cmdChanel)
 	th.AssertNil(t, errCMDCreate)
 
-	combinedStd, exited := wait_sh(cmdHandle, cmdChanel, false)
+	combinedStd, exited := wait_sh(cmdHandle, cmdChanel, verbose)
 	th.AssertEqual(t, true, exited)
 	th.AssertStringContains(t, "empty alertname in action", combinedStd)
 
@@ -130,10 +132,10 @@ actions:
 	MakeTestConfig(t, config)
 	cmd := []string{"./" + binName, "-config-path", "config.yaml"}
 	cmdChanel := make(chan int)
-	cmdHandle, errCMDCreate := sh(cmd, false, cmdChanel)
+	cmdHandle, errCMDCreate := sh(cmd, verbose, cmdChanel)
 	th.AssertNil(t, errCMDCreate)
 
-	combinedStd, exited := wait_sh(cmdHandle, cmdChanel, false)
+	combinedStd, exited := wait_sh(cmdHandle, cmdChanel, verbose)
 	th.AssertEqual(t, true, exited)
 	th.AssertStringContains(t, "empty name in action", combinedStd)
 
@@ -151,10 +153,10 @@ actions:
 	MakeTestConfig(t, config)
 	cmd := []string{"./" + binName, "-config-path", "config.yaml"}
 	cmdChanel := make(chan int)
-	cmdHandle, errCMDCreate := sh(cmd, false, cmdChanel)
+	cmdHandle, errCMDCreate := sh(cmd, verbose, cmdChanel)
 	th.AssertNil(t, errCMDCreate)
 
-	combinedStd, exited := wait_sh(cmdHandle, cmdChanel, false)
+	combinedStd, exited := wait_sh(cmdHandle, cmdChanel, verbose)
 	th.AssertEqual(t, true, exited)
 	th.AssertStringContains(t, "empty command in action", combinedStd)
 
@@ -173,12 +175,43 @@ actions:
 	MakeTestConfig(t, config)
 	cmd := []string{"./" + binName, "-config-path", "config.yaml"}
 	cmdChanel := make(chan int)
-	cmdHandle, errCMDCreate := sh(cmd, false, cmdChanel)
+	cmdHandle, errCMDCreate := sh(cmd, verbose, cmdChanel)
 	th.AssertNil(t, errCMDCreate)
 
-	combinedStd, exited := check_sh(cmdHandle, cmdChanel, false)
+	combinedStd, exited := check_sh(cmdHandle, cmdChanel, verbose)
 	th.AssertEqual(t, false, exited)
 	th.AssertEqual(t, "", combinedStd)
+
+	CleanUp(t, binName, cmdHandle)
+}
+
+func Test_HealthzReturns(t *testing.T) {
+	binName := BuildApp(t)
+
+	config := `version: 1
+actions:
+  - name: test
+    alertname: test
+    command: echo "test"
+`
+	MakeTestConfig(t, config)
+	cmd := []string{"./" + binName, "-config-path", "config.yaml"}
+	cmdChanel := make(chan int)
+	cmdHandle, errCMDCreate := sh(cmd, verbose, cmdChanel)
+	th.AssertNil(t, errCMDCreate)
+
+	combinedStd, exited := check_sh(cmdHandle, cmdChanel, verbose)
+	th.AssertEqual(t, false, exited)
+	th.AssertEqual(t, "", combinedStd)
+
+	cmdHealthz := []string{"curl", "-s", "http://localhost:8080/healthz"}
+	cmdHealthzChanel := make(chan int)
+	cmdHealthzHandle, errCMDHealthzCreate := sh(cmdHealthz, verbose, cmdHealthzChanel)
+	th.AssertNil(t, errCMDHealthzCreate)
+
+	combinedStdHealthz, exitedHealthz := wait_sh(cmdHealthzHandle, cmdHealthzChanel, verbose)
+	th.AssertEqual(t, true, exitedHealthz)
+	th.AssertEqual(t, "0: : ok", combinedStdHealthz)
 
 	CleanUp(t, binName, cmdHandle)
 }
@@ -198,8 +231,8 @@ func MakeTestConfig(t *testing.T, config string) {
 	th.AssertNil(t, err)
 }
 
-func CleanUp(t *testing.T, binName string, cmd *exec.Cmd) {
-	cmd.Process.Kill()
+func CleanUp(t *testing.T, binName string, cmdHandle *exec.Cmd) {
+	cmdHandle.Process.Kill()
 
 	cmdRmBin := []string{"rm", binName}
 	sh_run(cmdRmBin, false)
