@@ -4,6 +4,7 @@ import (
 	"actioneer/internal/args"
 	"actioneer/internal/command"
 	"actioneer/internal/config"
+	"actioneer/internal/healthz"
 	"actioneer/internal/logging"
 	"actioneer/internal/notification"
 	"actioneer/internal/processor"
@@ -60,6 +61,7 @@ func main() {
 	s := Server{IsDryRun: *args.IsDryRun, State: actions, Shell: command.CommandRunner{}}
 	mux := http.NewServeMux()
 	mux.Handle("/", s)
+	mux.HandleFunc("/healthz", healthz.ServeHTTP)
 	if err := http.ListenAndServe(":8080", mux); err != nil {
 		slog.Error(err.Error())
 		os.Exit(2)

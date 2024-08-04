@@ -1,0 +1,5 @@
+version: v1
+actions:
+  - name: "test"
+    alertname: "Test Alert"
+    command: "kubectl delete pod ~pod -n ~namespace"
